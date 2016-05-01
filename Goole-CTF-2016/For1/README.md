@@ -12,7 +12,7 @@ $ size=0x30000000; off=0x24a8; head -c $(($off+$size)) dump1.raw | tail -c +$(($
 ```
 
 # Display Running Processes
-Runnings `strings` on `mem.dmp` showed a number of unmistakeable Windows artifacts, such as `explorer.exe`, but we as yet had no idea which Windows version was running. We tried our try running Volatility on it with all installed profiles:
+Runnings `strings` on `mem.dmp` showed a number of unmistakeable Windows artifacts, such as `explorer.exe`, but we as yet had no idea which Windows version was running. We tried our luck running Volatility on it with all installed profiles:
 ```bash
 for p in `volatility --info | grep "A Profile" | cut -d' ' -f1`; do
   echo $p; volatility -f mem.raw --profile=$p pslist;
