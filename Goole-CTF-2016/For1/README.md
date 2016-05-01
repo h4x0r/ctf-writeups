@@ -1,5 +1,6 @@
 # Identify Provided Materials
 Examination of the `dump1.raw` file revealed that the file is an ELF executable containing the magic codes `VBCORE` and `VBCPU`. Clearly, this is a system dump of a VirtualBox instance.
+![Hex Dump of dump1.raw](dump1.raw-hex.png)
 
 # Dump the Memory
 ```bash
