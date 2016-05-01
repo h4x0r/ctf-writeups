@@ -78,4 +78,8 @@ Since our objective was to find the flag, our detective hunches kicked in and we
 volatility -f mem.dmp --profile=Win10x64 memdump -p 4092 -D .
 ```
 
-With `mspaint.exe` dumped, we used [Bernardo Rodrigues](https://twitter.com/bernardomr)'s [w00tsec Method](http://w00tsec.blogspot.hk/2015/02/extracting-raw-pictures-from-memory.html) to extract its display buffer. We tried to open the dumped file with GIMP as raw image data and was presented with a preview dialog in which we could specify the pixel format, image width and so on. We tried the "RBG Alpha" format, and scrolled "offset" slider to the right to look for an area which resembles a framebuffer characterized by a contigeous block of non-random data. Such an area was found around offset 8099195. So we moved the width slider to find a setting which could well align the framebuffer contents.
+With `mspaint.exe` dumped, we used [Bernardo Rodrigues](https://twitter.com/bernardomr)'s [w00tsec Method](http://w00tsec.blogspot.hk/2015/02/extracting-raw-pictures-from-memory.html) to extract its display buffer. We tried to open the dumped file with GIMP as raw image data and was presented with a preview dialog in which we could specify the pixel format, image width and so on.
+
+We tried the "RBG Alpha" format, and scrolled the "offset" slider to the right to look for an area which resembles a framebuffer characterized by a contigeous block of non-random data. Such an area was found around offset 8099195. So we moved the width slider to find a setting which could well align the framebuffer contents and found this:
+
+![Raw Image](rawimg.png)
