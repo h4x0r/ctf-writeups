@@ -96,7 +96,7 @@ Since our objective was to find the flag, our detective hunches kicked in and we
 
 [KaiJern Lau](https://twitter.com/kaijern) suggested examining `mspaint.exe`. We first dumped its process memory:
 ```bash
-volatility -f dump1.raw --profile=Win10x64 memdump -p 4092 -D .
+$ volatility -f dump1.raw --profile=Win10x64 memdump -p 4092 -D .
 ```
 
 Then we used [Bernardo Rodrigues](https://twitter.com/bernardomr)'s [w00tsec Method](http://w00tsec.blogspot.hk/2015/02/extracting-raw-pictures-from-memory.html) to extract its display buffer. We tried to open the dumped file with GIMP as raw image data and was presented with a preview dialog in which we could specify the pixel format, image width and so on.
