@@ -110,5 +110,5 @@ We tried the "RBG Alpha" format, and scrolled the "offset" slider to the right t
 $ objdump -h dump1.raw | egrep -w "(Idx|load1)"
 Idx Name          Size      VMA               LMA               File off  Algn
   1 load1         30000000  0000000000000000  0000000000000000  000024a8  2**0
-$ size=0x30000000; off=0x24a8; head -c $(($off+$size)) dump1.raw | tail -c +$(($off+1)) > mem.dmp
+$ size=0x30000000; offset=0x24a8; head -c $(($offset+$size)) dump1.raw | tail -c +$(($offset+1)) > mem.dmp
 ```
