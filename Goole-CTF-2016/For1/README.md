@@ -105,7 +105,7 @@ We tried the "RBG Alpha" format, and scrolled the "offset" slider to the right t
 
 # Further Research
 1. Next time there's an interest in "seeing the screen" from a VirtualBox core dump, it may be worth examining the VGA memory segments, see [MoVP II 1.2 VirtualBox ELF64 Core Dumps](http://volatility-labs.blogspot.hk/2013/05/movp-ii-12-virtualbox-elf64-core-dumps.html).
-2. To use a memory analysis tool that does not support VirtualBox core dumps, carve out the memory dump first with
+2. To use a memory analysis tool that does not support VirtualBox core dumps, carve out the raw memory dump first with
 ```bash
 $ objdump -h dump1.raw | egrep -w "(Idx|load1)"
 Idx Name          Size      VMA               LMA               File off  Algn
