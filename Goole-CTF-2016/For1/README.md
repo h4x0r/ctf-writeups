@@ -1,26 +1,41 @@
+# Challenge
+"Find the flag" in a provided `dump1.raw.lzma` file.
+
 # Identify Provided Materials
-Examination of the `dump1.raw` file revealed that the file is an ELF executable containing the magic codes `VBCORE` and `VBCPU`. Clearly, this is a system dump of a VirtualBox instance.
+Upon examination, `dump1.raw` was found to be an ELF executable containing the magic codes `VBCORE` and `VBCPU`. Clearly, this is a core dump of a VirtualBox instance.
 
 ![Hex Dump of dump1.raw](dump1.raw-hex.png)
 
-# Dump the Memory
-```bash
-$ objdump -h dump1.raw | egrep -w "(Idx|load1)"
-Idx Name          Size      VMA               LMA               File off  Algn
-  1 load1         30000000  0000000000000000  0000000000000000  000024a8  2**0
-$ size=0x30000000; off=0x24a8; head -c $(($off+$size)) dump1.raw | tail -c +$(($off+1)) > mem.dmp
+Next we scan the memory dump for a KDBG header to determine the correct OS profile to use:
 ```
+$ volatility -f dump1.raw kdbgscan
+Volatility Foundation Volatility Framework 2.5
+**************************************************
+Instantiating KDBG using: Unnamed AS Win10x64 (6.4.9841 64bit)
+Offset (V)                    : 0xf80185d1db20
+Offset (P)                    : 0x271db20
+KdCopyDataBlock (V)           : 0xf80185c03668
+Block encoded                 : Yes
+Wait never                    : 0x149bddc002d5936d
+Wait always                   : 0x5ab2422337bd0
+KDBG owner tag check          : True
+Profile suggestion (KDBGHeader): Win10x64
+Version64                     : 0xf80185d1de80 (Major: 15, Minor: 10240)
+Service Pack (CmNtCSDVersion) : 0
+Build string (NtBuildLab)     : 10240.16393.amd64fre.th1_st1.150
+PsActiveProcessHead           : 0xfffff80185d33380 (49 processes)
+PsLoadedModuleList            : 0xfffff80185d39030 (135 modules)
+KernelBase                    : 0xfffff80185a14000 (Matches MZ: True)
+Major (OptionalHeader)        : 10
+Minor (OptionalHeader)        : 0
+KPCR                          : 0xfffff80185d77000 (CPU 0)
+```
+Turned out it is a 64-bit Windows 10 VM.
 
 # Display Running Processes
-Runnings `strings` on `mem.dmp` showed a number of unmistakeable Windows artifacts, such as `explorer.exe`, but we as yet had no idea which Windows version was running. We tried our luck running Volatility on it with all installed profiles:
-```bash
-for p in `volatility --info | grep "A Profile" | cut -d' ' -f1`; do
-  echo $p; volatility -f mem.raw --profile=$p pslist;
-done
 ```
-
-It turned out to be a 64-bit Windows 10, with the following process list:
-```
+$ volatility -f dump1.raw --profile=Win10x64 pslist
+Volatility Foundation Volatility Framework 2.5
 Offset(V)          Name                    PID   PPID   Thds     Hnds   Sess  Wow64 Start                          Exit                          
 ------------------ -------------------- ------ ------ ------ -------- ------ ------ ------------------------------ ------------------------------
 0xffffe00032553780 System                    4      0    126        0 ------      0 2016-04-04 16:12:33 UTC+0000                                 
@@ -75,13 +90,25 @@ Offset(V)          Name                    PID   PPID   Thds     Hnds   Sess  Wo
 ```
 
 # Examine Running Processes
-Since our objective was to find the flag, our detective hunches kicked in and we started examining a number of processes, [KaiJern Lau](https://twitter.com/kaijern) suggested examining `mspaint.exe`.
+Since our objective was to find the flag, our detective hunches kicked in and we started examining a number of interesting processes such as `notepad.exe`.
+
+[KaiJern Lau](https://twitter.com/kaijern) suggested examining `mspaint.exe`. We first dumped its process memory:
 ```bash
-volatility -f mem.dmp --profile=Win10x64 memdump -p 4092 -D .
+volatility -f dump1.raw --profile=Win10x64 memdump -p 4092 -D .
 ```
 
-With `mspaint.exe` dumped, we used [Bernardo Rodrigues](https://twitter.com/bernardomr)'s [w00tsec Method](http://w00tsec.blogspot.hk/2015/02/extracting-raw-pictures-from-memory.html) to extract its display buffer. We tried to open the dumped file with GIMP as raw image data and was presented with a preview dialog in which we could specify the pixel format, image width and so on.
+Then we used [Bernardo Rodrigues](https://twitter.com/bernardomr)'s [w00tsec Method](http://w00tsec.blogspot.hk/2015/02/extracting-raw-pictures-from-memory.html) to extract its display buffer. We tried to open the dumped file with GIMP as raw image data and was presented with a preview dialog in which we could specify the pixel format, image width and so on.
 
 We tried the "RBG Alpha" format, and scrolled the "offset" slider to the right to look for an area which resembles a framebuffer characterized by a contigeous block of non-random data. Such an area was found around offset 8099195. So we moved the width slider to find a setting which could well align the framebuffer contents and found this:
 
 ![Raw Image](rawimg.png)
+
+# Further Research
+1. Next time there's an interest in "seeing the screen" from a VirtualBox core dump, it may be worth examining the VGA memory segments, see [MoVP II 1.2 VirtualBox ELF64 Core Dumps](http://volatility-labs.blogspot.hk/2013/05/movp-ii-12-virtualbox-elf64-core-dumps.html).
+2. To use a memory analysis tool that does not support VirtualBox core dumps, carve out the memory dump first with
+```bash
+$ objdump -h dump1.raw | egrep -w "(Idx|load1)"
+Idx Name          Size      VMA               LMA               File off  Algn
+  1 load1         30000000  0000000000000000  0000000000000000  000024a8  2**0
+$ size=0x30000000; off=0x24a8; head -c $(($off+$size)) dump1.raw | tail -c +$(($off+1)) > mem.dmp
+```
